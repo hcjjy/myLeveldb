@@ -6,3 +6,5 @@ leveldb详解
 http://blog.csdn.net/sparkliang/article/details/8604416
 leveldb学习之测试代码
 http://www.voidcn.com/blog/tmshasha/article/p-4445978.html
+windows下编译leveldb
+http://blog.csdn.net/flyfish1986/article/details/46806893
