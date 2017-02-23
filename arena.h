@@ -25,5 +25,5 @@ namespace leveldb {
 		void operator=(const Arena&);
 	};
 }
-#endif // ! STORAGE_LEVELDB_UTIL_ARENA_H_
+#endif // STORAGE_LEVELDB_UTIL_ARENA_H_
 
