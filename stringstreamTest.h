@@ -1,5 +1,5 @@
-#ifndef STRINGSTREAMTEST
-#define STRINGSTREAMTEST
+#ifndef STRINGSTREAMTEST_H_
+#define STRINGSTREAMTEST_H_
 
 #include<iostream>
 #include<sstream>
@@ -25,4 +25,4 @@ namespace leveldb {
 	}
 }
 
-#endif // !STRINGSTREAMTEST
+#endif // !STRINGSTREAMTEST_H_

@@ -1,4 +1,5 @@
 #include<iostream>
+#include<stdlib.h>
 #include"slice.h"
 #include"arena.h"
 #include"status.h"
@@ -6,6 +7,7 @@
 #include"templateTest.h"
 #include"skiplist.h"
 #include"stringstreamTest.h"
+#include"littleBigEndian.h"
 using namespace std;
 int main()
 {
@@ -60,5 +62,13 @@ int main()
 	arrary.setJ(1);
 	cout << "stringstream Test==========================" << endl;
 	leveldb::stringstreamTest();
+	cout << "littleBigEndian Test==========================" << endl;
+	leveldb::littlebigendianTest();
+	const char *ch1 = "";
+	const char *ch22 = NULL;
+	if (ch1 != NULL)
+		cout << ch1 << endl;
+	if (ch1 == '\0')
+		cout << "ch2" << endl;
 	return 0;
 }

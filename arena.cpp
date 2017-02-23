@@ -41,14 +41,14 @@ namespace leveldb {
 		if (needed <= alloc_bytes_remaining_)
 		{
 			result = alloc_ptr_ + slop;
-			alloc_bytes_remaining_ -= needed;
 			alloc_ptr_ += needed;
+			alloc_bytes_remaining_ -= needed;
 		}
 		else
 		{
 			result = allocateFallback(bytes);
 		}
-		//why ?
+		//can I ignore?
 		assert((reinterpret_cast<uintptr_t>(result) & (align - 1)) == 0);
 		return result;
 	}

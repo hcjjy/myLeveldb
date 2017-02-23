@@ -33,7 +33,7 @@ namespace leveldb
 		{
 			return Status(kIOError, msg, msg2);
 		}
-		bool isOk() const { return state_ == NULL; }
+		bool ok() const { return state_ == NULL; }
 		bool isNotFound() const { return code() == kNotFound; }
 		bool isCorruption() const { return code() == kCorruption; }
 		bool isNotSupported() const { return code() == kNotSupported; }

@@ -107,13 +107,13 @@ namespace leveldb
 	{
 		Node* pre[kMaxHeight];
 		Node* node = findEqualOrGreater(key, pre);
-		assert(node && !equal(node->key_, key));
+		//我们的数据不允许重复插入
+		assert(node == NULL || !equal(node->key_, key));
 		int h = randomHeight();
 		if (h > getCurMaxHeight())
 		{
-			//he_ 可以不用了吧
-			//for (int i = curMaxHeight_; i < h; ++i)
-			//	prev[i] = head_;
+			for (int i = getCurMaxHeight(); i < h; ++i)
+				prev[i] = head_;
 			curMaxHeight_.NoBarrier_Store(reinterpret_cast<void*>(h));
 		}
 		node = newNode(key, h);
@@ -128,7 +128,7 @@ namespace leveldb
 	typename SkipList<Key, Comparator>::Node*
 	SkipList<Key, Comparator>::newNode(const Key& key, int height) 
 	{
-		char* allocate = arena_->allocateAligned(sizeof(Node) + sizeof(height)*(height - 1));
+		char* allocate = arena_->allocateAligned(sizeof(Node) + sizeof(port::AtomicPointer)*(height - 1));
 		Node* result = new (allocate)Node(key);
 		return result;
 	}
@@ -137,7 +137,7 @@ namespace leveldb
 	typename SkipList<Key, Comparator>::Node*
 	SkipList<Key, Comparator>::findEqualOrGreater(const Key& key, Node** pre) const
 	{
-		int level = kMaxHeight - 1;
+		int level = getCurMaxHeight() - 1;
 		Node* x = head_;
 		Node* next;
 		while (level >= 0)
@@ -161,7 +161,7 @@ namespace leveldb
 	typename SkipList<Key, Comparator>::Node* 
 	SkipList<Key, Comparator>::findLessThan(const Key& key) const
 	{
-		int level = kMaxHeight - 1;
+		int level = getCurMaxHeight() - 1;
 		Node* x = head_;
 		while (level >= 0)
 		{
@@ -180,7 +180,7 @@ namespace leveldb
 	typename SkipList<Key, Comparator>::Node*
 	SkipList<Key, Comparator>::findLast() const
 	{
-		int level = kMaxHeight - 1;
+		int level = getCurMaxHeight() - 1;
 		Node* x = head_;
 		while (level >= 0)
 		{
