@@ -16,7 +16,7 @@ namespace leveldb
 	private:
 		struct Node;
 	public:
-		explicit SkipList(Comparator* cmp, Arena* arena);
+		explicit SkipList(Comparator cmp, Arena* arena);
 		void insert(const Key& key);
 		bool contains(const Key& key) const;
 		class Iterator
@@ -32,7 +32,7 @@ namespace leveldb
 			void seekToLast();
 		private:
 			const SkipList* list_;
-			Node* node_; //±£´æÖ¸Ïòµ±Ç°½áµãµÄÖ¸Õë
+			Node* node_; //ä¿å­˜æŒ‡å‘å½“å‰ç»“ç‚¹çš„æŒ‡é’ˆ
 		};
 	private:
 		Node* newNode(const Key& key, int hight);
@@ -42,45 +42,45 @@ namespace leveldb
 		int randomHeight();
 		bool equal(const Key& a, const Key& b) const { return compare_(a, b) == 0; }
 		enum{kMaxHeight = 12};
-		Comparator* const compare_;
-		Arena* const arena_; //ÓÃÓÚ·ÖÅä½ÚµãÄÚ´æ
-		Node* const head_; //Í·½áµãÖ¸Õë
+		Comparator const compare_;
+		Arena* const arena_; //ç”¨äºåˆ†é…èŠ‚ç‚¹å†…å­˜
+		Node* const head_; //å¤´ç»“ç‚¹æŒ‡é’ˆ
 		Random rnd_;
 		port::AtomicPointer curMaxHeight_;
 		inline int getCurMaxHeight() const
 		{
 			return reinterpret_cast<intptr_t>(curMaxHeight_.NoBarrier_Load());
 		}
-		//²»ÔÊĞí¿½±´
+		//ä¸å…è®¸æ‹·è´
 		SkipList(const SkipList&);
 		void operator=(const SkipList&);
 	};
 
-	//ÊµÏÖÏ¸½Ú
+	//å®ç°ç»†èŠ‚
 	template<typename Key, class Comparator>
 	struct SkipList<Key, Comparator>::Node
 	{
-		Node(const Key& key) :key_(key) {}
-		Key const key_;
-		//Ô­×Ó²Ù×÷»ñµÃ
+		Node(const Key& k) :key(k) {}
+		Key const key;
+		//åŸå­æ“ä½œè·å¾—
 		Node* next(int n)
 		{
 			assert(n >= 0);
 			return reinterpret_cast<Node*>(next_[n].Acquire_Load());
 		}
-		//Ô­×Ó²Ù×÷´æ´¢
+		//åŸå­æ“ä½œå­˜å‚¨
 		void setNext(int n, Node* x)
 		{
 			assert(n >= 0);
 			next_[n].Release_Store(x);
 		}
-		//Õı³£²Ù×÷»ñµÃ
+		//æ­£å¸¸æ“ä½œè·å¾—
 		Node* noBarrier_Next(int n)
 		{
 			assert(n >= 0);
 			return reinterpret_cast<Node*>(next_[n].NoBarrier_Load());
 		}
-		//Õı³£²Ù×÷´æ´¢
+		//æ­£å¸¸æ“ä½œå­˜å‚¨
 		void noBarrier_SetNext(int n, Node* x)
 		{
 			assert(n >= 0);
@@ -91,7 +91,7 @@ namespace leveldb
 	};
 
 	template<typename Key, class Comparator>
-	SkipList<Key, Comparator>::SkipList(Comparator* cmp, Arena* arena)
+	SkipList<Key, Comparator>::SkipList(Comparator cmp, Arena* arena)
 		:compare_(cmp),
 		arena_(arena),
 		head_(newNode(0, kMaxHeight)),
@@ -105,10 +105,10 @@ namespace leveldb
 	template<typename Key, class Comparator>
 	void SkipList<Key, Comparator>::insert(const Key& key)
 	{
-		Node* pre[kMaxHeight];
-		Node* node = findEqualOrGreater(key, pre);
-		//ÎÒÃÇµÄÊı¾İ²»ÔÊĞíÖØ¸´²åÈë
-		assert(node == NULL || !equal(node->key_, key));
+		Node* prev[kMaxHeight];
+		Node* node = findEqualOrGreater(key, prev);
+		//æˆ‘ä»¬çš„æ•°æ®ä¸å…è®¸é‡å¤æ’å…¥
+		assert(node == NULL || !equal(node->key, key));
 		int h = randomHeight();
 		if (h > getCurMaxHeight())
 		{
@@ -119,8 +119,8 @@ namespace leveldb
 		node = newNode(key, h);
 		for (int i = h - 1; i >= 0; --i)
 		{
-			node->noBarrier_SetNext(i,pre[i]->noBarrier_Next(i));
-			pre[i]->setNext(i, node);
+			node->noBarrier_SetNext(i,prev[i]->noBarrier_Next(i));
+			prev[i]->setNext(i, node);
 		}
 	}
 
@@ -139,13 +139,13 @@ namespace leveldb
 	{
 		int level = getCurMaxHeight() - 1;
 		Node* x = head_;
-		Node* next;
+		Node* next = NULL;
 		while (level >= 0)
 		{
 			next = x->next(level);
-			if (next == NULL || compare_(next->key_, key) >= 0)
+			if (next == NULL || compare_(next->key, key) >= 0)
 			{
-				if (pre[level])
+				if (pre != NULL)
 					pre[level] = x;
 				--level;
 			}
@@ -165,10 +165,10 @@ namespace leveldb
 		Node* x = head_;
 		while (level >= 0)
 		{
-			//he_ ¿ÉÒÔ²»ÓÃ°É
-			//assert(x == head_ || compare_(x->key_, key) < 0);
+			//he_ å¯ä»¥ä¸ç”¨å§
+			//assert(x == head_ || compare_(x->key, key) < 0);
 			Node* next = x->next(level);
-			if (next == NULL || compare_(next->key_, key) >= 0)
+			if (next == NULL || compare_(next->key, key) >= 0)
 				--level;
 			else
 				x = next;
@@ -191,7 +191,7 @@ namespace leveldb
 				x = next;
 		}
 		return x;
-		//Ã»ÓĞÀûÓÃÌø±íµÄÓÅÊÆ£¬ÕâÑù±éÀúÌ«ÂıÁË
+		//æ²¡æœ‰åˆ©ç”¨è·³è¡¨çš„ä¼˜åŠ¿ï¼Œè¿™æ ·éå†å¤ªæ…¢äº†
 		//Node* x = head;
 		//while (x->next_[0] != NULL)
 		//	x = x->next_[0];
@@ -201,7 +201,7 @@ namespace leveldb
 	template<typename Key, class Comparator>
 	int SkipList<Key, Comparator>::randomHeight()
 	{
-		//ÒÔ¸ÅÂÊÎªËÄ·ÖÖ®Ò»Ôö¼Ó¸ß¶È
+		//ä»¥æ¦‚ç‡ä¸ºå››åˆ†ä¹‹ä¸€å¢åŠ é«˜åº¦
 		static const unsigned int kBranching = 4;
 		int height = 1;
 		while (height < kMaxHeight && (rnd_.next() % kBranching == 0))
@@ -217,10 +217,10 @@ namespace leveldb
 	bool SkipList<Key, Comparator>::contains(const Key& key) const
 	{
 		Node* node = findEqualOrGreater(key, NULL);
-		return (node != NULL && equal(node->key_, key));
+		return (node != NULL && equal(node->key, key));
 	}
 
-	//ÄÚÖÃµü´úÆ÷
+	//å†…ç½®è¿­ä»£å™¨
 	template<typename Key, class Comparator>
 	SkipList<Key, Comparator>::Iterator::Iterator(const SkipList* list)
 	{
@@ -245,15 +245,15 @@ namespace leveldb
 	void SkipList<Key, Comparator>::Iterator::next()
 	{
 		assert(valid());
-		return node_->next(0);
+		node_ = node_->next(0);
 	}
 
 	template<typename Key, class Comparator>
 	void SkipList<Key, Comparator>::Iterator::prev()
 	{
 		assert(valid());
-		node_ = list_->findLessThan(node->key_);
-		if (node_ == list_head_)
+		node_ = list_->findLessThan(node_->key);
+		if (node_ == list_->head_)
 			node_ = NULL;
 	}
 
@@ -279,4 +279,3 @@ namespace leveldb
 }
 
 #endif // !STORAGE_LEVELDB_DB_SKIPLIST_H_
-
